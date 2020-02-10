@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">PowerBox Control</string>
+    <string-array name="PowerBox_IDs">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+</resources>
