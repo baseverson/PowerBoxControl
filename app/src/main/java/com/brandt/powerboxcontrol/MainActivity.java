@@ -25,16 +25,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     ArrayAdapter<CharSequence> adapter;
 
-    int selectedPowerBoxId;
-    boolean channelOnState[][];
+    int selectedPowerBoxId = 1;
+    boolean currentChannelState[][];
+    String host = "http://192.168.86.67:5000";
 
     public void MainActivity() {
         System.out.println("Starting MainActivity ctor()");
 
-        channelOnState = new boolean[2][8];
+        currentChannelState = new boolean[2][8];
         printCurrentPowerBoxState();
-
-        System.out.println("MainActivity ctor() finished");
     }
 
     @Override
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Spinner spinner = (Spinner) findViewById(R.id.box_selection_spinner);
+        Spinner spinner = findViewById(R.id.box_selection_spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
         adapter = ArrayAdapter.createFromResource(this,
             R.array.PowerBox_IDs, android.R.layout.simple_spinner_item);
@@ -53,27 +52,44 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         spinner.setOnItemSelectedListener(this);
 
-        channelOnState = new boolean[2][8];
+        currentChannelState = new boolean[1][8];
         printCurrentPowerBoxState();
-
-        out.println("MainActivity setup complete.");
     }
 
     public void printCurrentPowerBoxState() {
         System.out.println("Current PowerBox Channel states:");
-        for(int i=0; i<channelOnState.length; i++) {
-            System.out.println("   PowerBox: " + (int)(i+1));
-            for(int j=0; j<channelOnState[i].length; j++) {
+        for(int i=0; i<currentChannelState.length; i++) {
+            System.out.println("   PowerBox: " + (i+1));
+            for(int j=0; j<currentChannelState[i].length; j++) {
                 String channelState;
-                if (channelOnState[i][j]) {
+                if (currentChannelState[i][j]) {
                    channelState = "ON";
                 }
                 else {
                     channelState = "OFF";
                 }
-                System.out.println("      Channel " + (int)(j+1) + ": " + channelState);
+                System.out.println("      Channel " + (j+1) + ": " + channelState);
             }
         }
+    }
+
+    public void updateCurrentPowerBoxState(JSONObject powerBoxState) {
+        System.out.println(powerBoxState);
+        try {
+            for(int i=0; i<powerBoxState.length(); i++) {
+                boolean newChannelState = false;
+                if(powerBoxState.get(String.valueOf(i+1)).toString().equals("ON")) {
+                    newChannelState = true;
+                }
+                currentChannelState[selectedPowerBoxId-1][i] = newChannelState;
+            }
+        }
+        catch(Exception e) {
+            System.out.println(e);
+        }
+
+        printCurrentPowerBoxState();
+
     }
 
     // onItemSelected() is called when a power box is selected from the spinner
@@ -98,10 +114,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         System.out.println("Adjusting PowerBox " + selectedPowerBoxId + " channel " + channelId);
 
-        channelOnState[selectedPowerBoxId-1][channelId-1] = !channelOnState[selectedPowerBoxId-1][channelId-1];
+        currentChannelState[selectedPowerBoxId-1][channelId-1] = !currentChannelState[selectedPowerBoxId-1][channelId-1];
 
-        String cmd = "";
-        if (channelOnState[selectedPowerBoxId-1][channelId-1]) {
+        String cmd;
+        if (currentChannelState[selectedPowerBoxId-1][channelId-1]) {
             cmd = "ON";
         }
         else {
@@ -109,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        String url = "http://192.168.86.21:5000/PowerBox/setChannelState";
+        String url = host + "/PowerBox/setChannelState";
 
         JSONObject data = new JSONObject();
         try {
@@ -127,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Log.e("REST Response", response.toString());
+                        updateCurrentPowerBoxState(response);
                     }
                 },
                 new Response.ErrorListener() {
@@ -138,29 +154,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
         );
         requestQueue.add(changeChannelStateReq);
-
-        url = "http://192.168.86.21:5000/PowerBox/getChannelStatus";
-        JsonObjectRequest getStatusReq = new JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.e("REST Response", response.toString());
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("REST Response", error.toString());
-                    }
-                }
-        );
-        requestQueue.add(getStatusReq);
-
-
-        //printCurrentPowerBoxState();
 
     }
 
