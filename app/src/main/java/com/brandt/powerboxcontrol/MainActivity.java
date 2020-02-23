@@ -3,11 +3,21 @@ package com.brandt.powerboxcontrol;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Switch;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONObject;
 
 import static java.lang.System.out;
 
@@ -66,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
+    // onItemSelected() is called when a power box is selected from the spinner
     public void onItemSelected(AdapterView<?> parent, View view,
                                int pos, long id) {
         // An item was selected. You can retrieve the selected item using
@@ -80,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         out.println("OnNothingSelected called.");
     }
 
+    // changeChannelPowerState() is called when a channel switch is flipped.
     public void changeChannelPowerState(View view) {
         Switch s = (Switch) view;
         Integer channelId = Character.getNumericValue(s.getText().charAt(8));
@@ -88,7 +100,67 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         channelOnState[selectedPowerBoxId-1][channelId-1] = !channelOnState[selectedPowerBoxId-1][channelId-1];
 
-        printCurrentPowerBoxState();
+        String cmd = "";
+        if (channelOnState[selectedPowerBoxId-1][channelId-1]) {
+            cmd = "ON";
+        }
+        else {
+            cmd = "OFF";
+        }
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        String url = "http://192.168.86.21:5000/PowerBox/setChannelState";
+
+        JSONObject data = new JSONObject();
+        try {
+            data.put("channel", channelId);
+            data.put("state", cmd);
+        }
+        catch(Exception e) {
+            //do nothing
+        }
+
+        JsonObjectRequest changeChannelStateReq = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                data,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.e("REST Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("REST Response", error.toString());
+                    }
+                }
+        );
+        requestQueue.add(changeChannelStateReq);
+
+        url = "http://192.168.86.21:5000/PowerBox/getChannelStatus";
+        JsonObjectRequest getStatusReq = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.e("REST Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("REST Response", error.toString());
+                    }
+                }
+        );
+        requestQueue.add(getStatusReq);
+
+
+        //printCurrentPowerBoxState();
 
     }
 
