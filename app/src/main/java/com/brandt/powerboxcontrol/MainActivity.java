@@ -2,6 +2,7 @@ package com.brandt.powerboxcontrol;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -25,14 +26,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     ArrayAdapter<CharSequence> adapter;
 
-    int selectedPowerBoxId = 1;
-    boolean currentChannelState[][];
-    String host = "http://192.168.86.67:5000";
+    private int selectedPowerBoxId = 1;
+    private boolean currentChannelState[][];
+    private String host = "http://192.168.86.67:5000";
+
 
     public void MainActivity() {
         System.out.println("Starting MainActivity ctor()");
 
-        currentChannelState = new boolean[2][8];
         printCurrentPowerBoxState();
     }
 
@@ -54,6 +55,28 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         currentChannelState = new boolean[1][8];
         printCurrentPowerBoxState();
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        String url = host + "/PowerBox/getChannelStatus";
+        JsonObjectRequest changeChannelStateReq = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        updateCurrentPowerBoxState(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("REST Response", error.toString());
+                    }
+                }
+        );
+        requestQueue.add(changeChannelStateReq);
+
     }
 
     public void printCurrentPowerBoxState() {
@@ -80,6 +103,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 boolean newChannelState = false;
                 if(powerBoxState.get(String.valueOf(i+1)).toString().equals("ON")) {
                     newChannelState = true;
+                    System.out.println("Channel " + i + " is ON!");
+                }
+                else {
+                    System.out.println("Channel " + i + " is OFF!");
                 }
                 currentChannelState[selectedPowerBoxId-1][i] = newChannelState;
             }
@@ -89,6 +116,25 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         printCurrentPowerBoxState();
+
+        // Set Switch states
+        Switch channelSwitch;
+        channelSwitch = findViewById(R.id.switch1);
+        channelSwitch.setChecked(currentChannelState[0][0]);
+        channelSwitch = findViewById(R.id.switch2);
+        channelSwitch.setChecked(currentChannelState[0][1]);
+        channelSwitch = findViewById(R.id.switch3);
+        channelSwitch.setChecked(currentChannelState[0][2]);
+        channelSwitch = findViewById(R.id.switch4);
+        channelSwitch.setChecked(currentChannelState[0][3]);
+        channelSwitch = findViewById(R.id.switch5);
+        channelSwitch.setChecked(currentChannelState[0][4]);
+        channelSwitch = findViewById(R.id.switch6);
+        channelSwitch.setChecked(currentChannelState[0][5]);
+        channelSwitch = findViewById(R.id.switch7);
+        channelSwitch.setChecked(currentChannelState[0][6]);
+        channelSwitch = findViewById(R.id.switch8);
+        channelSwitch.setChecked(currentChannelState[0][7]);
 
     }
 
