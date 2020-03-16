@@ -28,8 +28,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private int selectedPowerBoxId = 1;
     private boolean currentChannelState[][];
-    private String host = "http://192.168.86.67:5000";
-
+    private String powerBoxAddress;
 
     public void MainActivity() {
         System.out.println("Starting MainActivity ctor()");
@@ -53,11 +52,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         spinner.setOnItemSelectedListener(this);
 
-        currentChannelState = new boolean[1][8];
+        // Set the PowerBox address based on the PowerBox Id selected
+        powerBoxAddress = "http://" + getApplicationContext().getResources().getStringArray(R.array.PowerBoxAddresses)[selectedPowerBoxId-1];
+
+        currentChannelState = new boolean[2][8];
         printCurrentPowerBoxState();
 
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        String url = host + "/PowerBox/getChannelStatus";
+        String url = powerBoxAddress + "/PowerBox/getChannelStatus";
         JsonObjectRequest changeChannelStateReq = new JsonObjectRequest(
                 Request.Method.GET,
                 url,
@@ -120,21 +122,21 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         // Set Switch states
         Switch channelSwitch;
         channelSwitch = findViewById(R.id.switch1);
-        channelSwitch.setChecked(currentChannelState[0][0]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][0]);
         channelSwitch = findViewById(R.id.switch2);
-        channelSwitch.setChecked(currentChannelState[0][1]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][1]);
         channelSwitch = findViewById(R.id.switch3);
-        channelSwitch.setChecked(currentChannelState[0][2]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][2]);
         channelSwitch = findViewById(R.id.switch4);
-        channelSwitch.setChecked(currentChannelState[0][3]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][3]);
         channelSwitch = findViewById(R.id.switch5);
-        channelSwitch.setChecked(currentChannelState[0][4]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][4]);
         channelSwitch = findViewById(R.id.switch6);
-        channelSwitch.setChecked(currentChannelState[0][5]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][5]);
         channelSwitch = findViewById(R.id.switch7);
-        channelSwitch.setChecked(currentChannelState[0][6]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][6]);
         channelSwitch = findViewById(R.id.switch8);
-        channelSwitch.setChecked(currentChannelState[0][7]);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][7]);
 
     }
 
@@ -146,6 +148,32 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         out.println("OnItemSelected called. pos: " + pos + " id: " + id);
         selectedPowerBoxId = Integer.parseInt(adapter.getItem(pos).toString());
         out.println("PowerBox " + selectedPowerBoxId + " selected");
+
+        // Set the powerBoxAddress to the correct address (specified in strings.xml) based on the
+        // PowerBox selected.
+        powerBoxAddress = "http://" + getApplicationContext().getResources().getStringArray(R.array.PowerBoxAddresses)[selectedPowerBoxId-1];
+        out.println("PowerBox " + selectedPowerBoxId + " address: " + powerBoxAddress);
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        String url = powerBoxAddress + "/PowerBox/getChannelStatus";
+        JsonObjectRequest changeChannelStateReq = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        updateCurrentPowerBoxState(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("REST Response", error.toString());
+                    }
+                }
+        );
+        requestQueue.add(changeChannelStateReq);
     }
 
     public void onNothingSelected(AdapterView<?> parent) {
@@ -171,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        String url = host + "/PowerBox/setChannelState";
+        String url = powerBoxAddress + "/PowerBox/setChannelState";
 
         JSONObject data = new JSONObject();
         try {

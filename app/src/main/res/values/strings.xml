@@ -4,4 +4,8 @@
         <item>1</item>
         <item>2</item>
     </string-array>
+    <string-array name="PowerBoxAddresses">
+        <item>192.168.86.21:5000</item>
+        <item>192.168.86.22:5000</item>
+    </string-array>
 </resources>
