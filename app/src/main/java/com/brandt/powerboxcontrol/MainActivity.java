@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         // Set the PowerBox address based on the PowerBox Id selected
         powerBoxAddress = "http://" + getApplicationContext().getResources().getStringArray(R.array.PowerBoxAddresses)[selectedPowerBoxId-1];
 
-        currentChannelState = new boolean[2][8];
+        currentChannelState = new boolean[2][16];
         printCurrentPowerBoxState();
 
         RequestQueue requestQueue = Volley.newRequestQueue(this);
@@ -137,6 +137,22 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][6]);
         channelSwitch = findViewById(R.id.switch8);
         channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][7]);
+        channelSwitch = findViewById(R.id.switch9);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][8]);
+        channelSwitch = findViewById(R.id.switch10);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][9]);
+        channelSwitch = findViewById(R.id.switch11);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][10]);
+        channelSwitch = findViewById(R.id.switch12);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][11]);
+        channelSwitch = findViewById(R.id.switch13);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][12]);
+        channelSwitch = findViewById(R.id.switch14);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][13]);
+        channelSwitch = findViewById(R.id.switch15);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][14]);
+        channelSwitch = findViewById(R.id.switch16);
+        channelSwitch.setChecked(currentChannelState[selectedPowerBoxId-1][15]);
 
     }
 
@@ -184,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     // changeChannelPowerState() is called when a channel switch is flipped.
     public void changeChannelPowerState(View view) {
         Switch s = (Switch) view;
-        Integer channelId = Character.getNumericValue(s.getText().charAt(8));
+        Integer channelId = Integer.parseInt(s.getText().toString().substring(8).trim());
 
         System.out.println("Adjusting PowerBox " + selectedPowerBoxId + " channel " + channelId);
 
